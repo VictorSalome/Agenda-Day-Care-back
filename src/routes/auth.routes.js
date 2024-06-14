@@ -14,7 +14,7 @@ router.post("/login", async (req, res) => {
     return new AuthController(req, res).postLogin();
 });
 
-// Rotas para puchar usuario com token privada
+// Rotas para puxar usuario com token privada
 router.get("/user/:id", checkToken, async (req, res) => {
     return new AuthController(req, res).getUsers();
 });

@@ -1,86 +1,45 @@
 const express = require("express");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 const router = express.Router();
 
-//model
-const Dog = require("../models/Dogs.model");
+const DogController = require("../controller/dog.controller");
 
-router.post("/dog", async (req, res) => {
-    const {
-        name,
-        breed,
-        color,
-        gender,
-        birthDate,
-        age,
-        selectedImageName,
-        ownerName,
-        feeding: { foodType, feedingFrequency, serveSnack, snackName = "" },
-        profileImage,
-    } = req.body;
+// Verifica se o diretório de upload existe, se não, cria
+const uploadDir = path.join(__dirname, "..", "uploads");
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
 
-    //validacoes
-    if (!name) {
-        return res.status(422).json({ msg: "O nome e obrigatorio" });
-    }
-    if (!breed) {
-        return res.status(422).json({ msg: "A raca e obrigatorio" });
-    }
-    if (!color) {
-        return res.status(422).json({ msg: "A cor e obrigatorio" });
-    }
-    if (!gender) {
-        return res.status(422).json({ msg: "O genero e obrigatorio" });
-    }
-    if (!birthDate) {
-        return res
-            .status(422)
-            .json({ msg: "A data de nascimento e obrigatorio" });
-    }
-    if (!age) {
-        return res.status(422).json({ msg: "A idade e obrigatorio" });
-    }
-    if (!selectedImageName) {
-        return res.status(422).json({ msg: "A imagem e obrigatorio" });
-    }
-    if (!ownerName) {
-        return res.status(422).json({ msg: "O proprietario e obrigatorio" });
-    }
+// Configuração do multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir); // Diretório onde as imagens serão salvas
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)); // Nome do arquivo será a data atual com a extensão original
+    },
+});
 
-    if (!profileImage) {
-        return res.status(422).json({ msg: "A imagem e obrigatorio" });
-    }
+const upload = multer({ storage: storage });
 
-    if (!foodType || !feedingFrequency || !serveSnack) {
-        return res.status(422).json({ msg: "A alimentação é obrigatorio" });
-    }
+router.post("/dog", upload.single("profileImage"), async (req, res) => {
+    return new DogController(req, res).postDog();
+});
 
-    if (serveSnack && !snackName) {
-        return res.status(422).json({ msg: "O nome do lanche e obrigatorio" });
-    }
+router.put("/dog/:id", upload.single("profileImage"), async (req, res) => {
+    return new DogController(req, res).putDog();
+});
 
-    try {
-        const dog = await Dog.create({
-            name,
-            breed,
-            color,
-            gender,
-            birthDate,
-            age,
-            selectedImageName,
-            ownerName,
-            feeding: {
-                foodType,
-                feedingFrequency,
-                serveSnack,
-                snackName,
-            },
-            profileImage,
-        });
-        res.status(201).json({ msg: "Cachorro criado com sucesso", dog });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ msg: "Aconteceu um erro no servidor" });
-    }
+// Rota para buscar todos os cachorros
+router.get("/dogs", async (req, res) => {
+    return new DogController(req, res).getDogs();
+});
+
+// Rota para deletar um cachorro
+router.delete("/dog/:id", async (req, res) => {
+    return new DogController(req, res).deleteDog();
 });
 
 module.exports = router;

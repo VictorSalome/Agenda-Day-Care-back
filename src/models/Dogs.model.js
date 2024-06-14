@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const Dog = mongoose.model("Dog", {
+const DogSchema = new mongoose.Schema({
     name: { type: String, required: true },
     breed: { type: String, required: true },
     color: { type: String, required: true },
@@ -18,6 +18,17 @@ const Dog = mongoose.model("Dog", {
     profileImage: { type: Buffer, required: true },
 });
 
+// Adicione uma opção toJSON para personalizar a serialização dos documentos
+DogSchema.set('toJSON', {
+    transform: function (doc, ret) {
+        if (ret.profileImage && ret.profileImage.data) {
+            const profileImageBase64 = Buffer.from(ret.profileImage.data).toString('base64');
+            ret.profileImageUrl = `data:image/jpeg;base64,${profileImageBase64}`;
+            delete ret.profileImage; // Remova o Buffer da imagem de perfil do objeto JSON
+        }
+    }
+});
 
+const Dog = mongoose.model("Dog", DogSchema);
 
 module.exports = Dog;
