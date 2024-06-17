@@ -192,7 +192,7 @@ class DogController {
             dog.feeding = feeding;
 
             if (profileImage) {
-                // Delete the old image if a new one is uploaded
+                // Exclua a imagem antiga se uma nova for enviada
                 if (dog.profileImage) {
                     const oldImagePath = path.join(uploadDir, dog.profileImage);
                     if (fs.existsSync(oldImagePath)) {
@@ -239,6 +239,24 @@ class DogController {
             });
 
             this.res.status(200).json({ dogs: dogsWithProfileImages });
+        } catch (error) {
+            console.log(error);
+            this.res.status(500).json({ msg: "Aconteceu um erro no servidor" });
+        }
+    }
+
+    async getDog() {
+        const { id } = this.req.params;
+
+        try {
+            const dog = await Dog.findById(id);
+            if (!dog) {
+                return this.res
+                    .status(404)
+                    .json({ message: "cachorro nao encontrado" });
+            }
+
+            this.res.status(200).json(dog);
         } catch (error) {
             console.log(error);
             this.res.status(500).json({ msg: "Aconteceu um erro no servidor" });
